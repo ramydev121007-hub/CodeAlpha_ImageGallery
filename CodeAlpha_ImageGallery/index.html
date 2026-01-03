@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Image Gallery | CodeAlpha Project</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #1a1a2e;
+            color: #f5f5f5;
+            line-height: 1.6;
+            padding-bottom: 40px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #e94560, #ff7e5f);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #a9b7c6;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Filter categories */
+        .filter-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .filter-btn {
+            padding: 12px 25px;
+            background-color: #0f3460;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-btn:hover {
+            background-color: #e94560;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+        }
+
+        .filter-btn.active {
+            background-color: #e94560;
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+        }
+
+        /* Gallery layout */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .gallery-item {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+            transition: all 0.4s ease;
+            position: relative;
+            height: 250px;
+            background-color: #0f3460;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .gallery-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .gallery-item:hover .gallery-img {
+            transform: scale(1.05);
+        }
+
+        .image-caption {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 52, 96, 0.85);
+            color: white;
+            padding: 15px;
+            transform: translateY(100%);
+            transition: transform 0.4s ease;
+        }
+
+        .gallery-item:hover .image-caption {
+            transform: translateY(0);
+        }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .lightbox-content {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(233, 69, 96, 0.3);
+        }
+
+        .lightbox-caption {
+            text-align: center;
+            font-size: 1.3rem;
+            margin-top: 15px;
+            color: white;
+        }
+
+        /* Navigation buttons */
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(233, 69, 96, 0.8);
+            color: white;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .nav-btn:hover {
+            background-color: #e94560;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .prev-btn {
+            left: 30px;
+        }
+
+        .next-btn {
+            right: 30px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .close-btn:hover {
+            transform: scale(1.2);
+        }
+
+        /* Gallery navigation */
+        .gallery-nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .nav-control {
+            padding: 12px 25px;
+            background-color: #0f3460;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-control:hover {
+            background-color: #e94560;
+            transform: translateY(-3px);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                gap: 20px;
+            }
+            
+            .gallery-item {
+                height: 220px;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .nav-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+            
+            .prev-btn {
+                left: 15px;
+            }
+            
+            .next-btn {
+                right: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .gallery {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-container {
+                gap: 10px;
+            }
+            
+            .filter-btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .nav-control {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Image filter classes */
+        .grayscale {
+            filter: grayscale(100%);
+        }
+        
+        .sepia {
+            filter: sepia(100%);
+        }
+        
+        .brightness {
+            filter: brightness(150%);
+        }
+        
+        .contrast {
+            filter: contrast(150%);
+        }
+        
+        .hue-rotate {
+            filter: hue-rotate(90deg);
+        }
+        
+        .saturate {
+            filter: saturate(200%);
+        }
+
+        .filter-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(233, 69, 96, 0.9);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .instructions {
+            background-color: rgba(15, 52, 96, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            border-left: 5px solid #e94560;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #e94560;
+        }
+
+        .instructions ul {
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-camera-retro"></i> Interactive Image Gallery</h1>
+            <p class="subtitle">CodeAlpha Internship Project - A responsive image gallery with filtering, lightbox, and visual effects</p>
+        </header>
+
+        <!-- Filter categories -->
+        <div class="filter-container">
+            <button class="filter-btn active" data-filter="all">
+                <i class="fas fa-layer-group"></i> All Images
+            </button>
+            <button class="filter-btn" data-filter="nature">
+                <i class="fas fa-tree"></i> Nature
+            </button>
+            <button class="filter-btn" data-filter="urban">
+                <i class="fas fa-city"></i> Urban
+            </button>
+            <button class="filter-btn" data-filter="abstract">
+                <i class="fas fa-palette"></i> Abstract
+            </button>
+            <button class="filter-btn" data-filter="portrait">
+                <i class="fas fa-user"></i> Portrait
+            </button>
+        </div>
+
+        <!-- Image gallery -->
+        <div class="gallery" id="imageGallery">
+            <!-- Images will be dynamically added by JavaScript -->
+        </div>
+
+        <!-- Gallery navigation -->
+        <div class="gallery-nav">
+            <button class="nav-control" id="prevBtn">
+                <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            <button class="nav-control" id="nextBtn">
+                Next <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- Lightbox -->
+        <div class="lightbox" id="lightbox">
+            <button class="close-btn" id="closeLightbox">
+                <i class="fas fa-times"></i>
+            </button>
+            <button class="nav-btn prev-btn" id="lightboxPrev">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="nav-btn next-btn" id="lightboxNext">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            <div class="lightbox-content-container">
+                <img class="lightbox-content" id="lightboxImage" src="" alt="">
+                <p class="lightbox-caption" id="lightboxCaption"></p>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions">
+            <h3>Project Features (CodeAlpha Requirements):</h3>
+            <ul>
+                <li><strong>✓ HTML & CSS Layout:</strong> Responsive grid gallery design</li>
+                <li><strong>✓ JavaScript Navigation:</strong> Next/Prev buttons & Lightbox view</li>
+                <li><strong>✓ Hover Effects:</strong> Smooth transitions on all interactive elements</li>
+                <li><strong>✓ Responsive Design:</strong> Works on mobile, tablet, and desktop</li>
+                <li><strong>✓ Bonus Features:</strong> Image filters (6 types) & category filtering</li>
+                <li><strong>✓ Additional:</strong> Keyboard support (arrows, ESC), filter indicators, animated transitions</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Image data with categories, captions, and filters
+        const imageData = [
+            { id: 1, src: "https://images.unsplash.com/photo-1501854140801-50d01698950b", category: "nature", caption: "Majestic mountain landscape at sunrise", filter: "sepia" },
+            { id: 2, src: "https://images.unsplash.com/photo-1514565131-fce0801e5785", category: "urban", caption: "Modern city skyline at dusk", filter: "grayscale" },
+            { id: 3, src: "https://images.unsplash.com/photo-1543857778-c4a1a569e388", category: "abstract", caption: "Colorful abstract art with geometric shapes", filter: "hue-rotate" },
+            { id: 4, src: "https://images.unsplash.com/photo-1519699047748-de8e457a634e", category: "portrait", caption: "Thoughtful portrait with dramatic lighting", filter: "brightness" },
+            { id: 5, src: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e", category: "nature", caption: "Enchanted forest path in autumn", filter: "saturate" },
+            { id: 6, src: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df", category: "urban", caption: "Urban architecture with unique patterns", filter: "contrast" },
+            { id: 7, src: "https://images.unsplash.com/photo-1550684376-efcbd6e3f031", category: "abstract", caption: "Liquid art with vibrant colors", filter: "sepia" },
+            { id: 8, src: "https://images.unsplash.com/photo-1494790108755-2616b786d4d1", category: "portrait", caption: "Smiling portrait with natural light", filter: "grayscale" },
+            { id: 9, src: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07", category: "nature", caption: "Peaceful lake surrounded by mountains", filter: "brightness" },
+            { id: 10, src: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df", category: "urban", caption: "Cityscape with reflections on water", filter: "hue-rotate" },
+            { id: 11, src: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64", category: "abstract", caption: "Abstract painting with texture", filter: "saturate" },
+            { id: 12, src: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80", category: "portrait", caption: "Portrait with artistic composition", filter: "contrast" }
+        ];
+
+        // DOM Elements
+        const gallery = document.getElementById('imageGallery');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImage = document.getElementById('lightboxImage');
+        const lightboxCaption = document.getElementById('lightboxCaption');
+        const closeLightbox = document.getElementById('closeLightbox');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const lightboxPrev = document.getElementById('lightboxPrev');
+        const lightboxNext = document.getElementById('lightboxNext');
+
+        // Current state
+        let currentCategory = 'all';
+        let currentIndex = 0;
+        let filteredImages = [...imageData];
+
+        // Initialize gallery
+        function initializeGallery() {
+            renderGallery();
+            setupEventListeners();
+        }
+
+        // Render gallery based on current filter
+        function renderGallery() {
+            gallery.innerHTML = '';
+            
+            filteredImages = currentCategory === 'all' 
+                ? [...imageData] 
+                : imageData.filter(img => img.category === currentCategory);
+            
+            filteredImages.forEach((image, index) => {
+                const galleryItem = document.createElement('div');
+                galleryItem.className = `gallery-item ${image.filter}`;
+                galleryItem.dataset.index = index;
+                galleryItem.dataset.category = image.category;
+                
+                galleryItem.innerHTML = `
+                    <img src="${image.src}?w=600&h=400&fit=crop&crop=entropy" 
+                         alt="${image.caption}" 
+                         class="gallery-img ${image.filter}">
+                    <div class="image-caption">
+                        <h3>${image.caption}</h3>
+                        <p>Category: ${image.category.charAt(0).toUpperCase() + image.category.slice(1)} | Filter: ${image.filter}</p>
+                    </div>
+                    <div class="filter-indicator">${image.filter}</div>
+                `;
+                
+                gallery.appendChild(galleryItem);
+                
+                // Add click event to open lightbox
+                galleryItem.addEventListener('click', () => openLightbox(index));
+            });
+            
+            // Update navigation buttons state
+            updateNavigation();
+        }
+
+        // Open lightbox with selected image
+        function openLightbox(index) {
+            currentIndex = index;
+            const image = filteredImages[currentIndex];
+            
+            lightboxImage.src = image.src + "?w=1200&h=800&fit=crop&crop=entropy";
+            lightboxImage.alt = image.caption;
+            lightboxCaption.textContent = image.caption;
+            
+            lightbox.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        }
+
+        // Close lightbox
+        function closeLightboxFunc() {
+            lightbox.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+
+        // Navigate to next image
+        function nextImage() {
+            currentIndex = (currentIndex + 1) % filteredImages.length;
+            openLightbox(currentIndex);
+        }
+
+        // Navigate to previous image
+        function prevImage() {
+            currentIndex = (currentIndex - 1 + filteredImages.length) % filteredImages.length;
+            openLightbox(currentIndex);
+        }
+
+        // Update navigation buttons state
+        function updateNavigation() {
+            prevBtn.disabled = currentCategory === 'all' && currentIndex === 0;
+            nextBtn.disabled = currentCategory === 'all' && currentIndex === imageData.length - 1;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Filter buttons
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Update active button
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    // Update current category
+                    currentCategory = button.dataset.filter;
+                    currentIndex = 0;
+                    
+                    // Re-render gallery
+                    renderGallery();
+                });
+            });
+            
+            // Gallery navigation
+            prevBtn.addEventListener('click', () => {
+                if (currentCategory === 'all') {
+                    currentIndex = (currentIndex - 1 + imageData.length) % imageData.length;
+                } else {
+                    const currentCategoryImages = imageData.filter(img => img.category === currentCategory);
+                    const currentIndexInCategory = currentCategoryImages.findIndex(img => img.id === filteredImages[currentIndex].id);
+                    const newIndexInCategory = (currentIndexInCategory - 1 + currentCategoryImages.length) % currentCategoryImages.length;
+                    currentIndex = imageData.findIndex(img => img.id === currentCategoryImages[newIndexInCategory].id);
+                }
+                
+                // Scroll to the previous image
+                const galleryItems = document.querySelectorAll('.gallery-item');
+                if (galleryItems[currentIndex % galleryItems.length]) {
+                    galleryItems[currentIndex % galleryItems.length].scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest'
+                    });
+                }
+                
+                updateNavigation();
+            });
+            
+            nextBtn.addEventListener('click', () => {
+                if (currentCategory === 'all') {
+                    currentIndex = (currentIndex + 1) % imageData.length;
+                } else {
+                    const currentCategoryImages = imageData.filter(img => img.category === currentCategory);
+                    const currentIndexInCategory = currentCategoryImages.findIndex(img => img.id === filteredImages[currentIndex].id);
+                    const newIndexInCategory = (currentIndexInCategory + 1) % currentCategoryImages.length;
+                    currentIndex = imageData.findIndex(img => img.id === currentCategoryImages[newIndexInCategory].id);
+                }
+                
+                // Scroll to the next image
+                const galleryItems = document.querySelectorAll('.gallery-item');
+                if (galleryItems[currentIndex % galleryItems.length]) {
+                    galleryItems[currentIndex % galleryItems.length].scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest'
+                    });
+                }
+                
+                updateNavigation();
+            });
+            
+            // Lightbox controls
+            closeLightbox.addEventListener('click', closeLightboxFunc);
+            lightboxPrev.addEventListener('click', prevImage);
+            lightboxNext.addEventListener('click', nextImage);
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (lightbox.style.display === 'flex') {
+                    if (e.key === 'Escape') closeLightboxFunc();
+                    if (e.key === 'ArrowRight') nextImage();
+                    if (e.key === 'ArrowLeft') prevImage();
+                }
+            });
+            
+            // Close lightbox when clicking outside the image
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) closeLightboxFunc();
+            });
+        }
+
+        // Initialize the gallery when page loads
+        document.addEventListener('DOMContentLoaded', initializeGallery);
+    </script>
+</body>
+</html>
